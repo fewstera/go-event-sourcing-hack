@@ -6,6 +6,12 @@ type Repository struct {
 	users map[string]*User
 }
 
+func NewRepository() *Repository {
+	repository := new(Repository)
+	repository.users = make(map[string]*User)
+	return repository
+}
+
 func (repository *Repository) SaveUser(user *User) {
 	userId := user.GetId()
 	_, userExistsInRepo := repository.users[userId]

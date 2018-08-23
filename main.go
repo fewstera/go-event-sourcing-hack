@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 func main() {
-	repository := &Repository{}
+	repository := NewRepository()
 	commandHandler := NewCommandHandler(repository)
 
 	createUserCommand := CreateUserCommand{"1", "Aidan Fewster", 20}
