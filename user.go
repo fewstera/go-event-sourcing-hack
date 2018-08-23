@@ -24,6 +24,10 @@ func (u *User) IncreaseAge() {
 	u.apply(&UserGotOlderEvent{u.id})
 }
 
+func (u *User) ChangeName(name string) {
+	u.apply(&UsersNameChangedEvent{u.id, name})
+}
+
 // Apply methods - These should only mutate state, they are not allowed to error.
 func (u *User) apply(event Event) {
 	switch e := event.(type) {
@@ -31,8 +35,9 @@ func (u *User) apply(event Event) {
 		u.applyUserCreated(e)
 	case *UserGotOlderEvent:
 		u.applyUserGotOlder(e)
+	case *UsersNameChangedEvent:
+		u.applyUsersNameChanged(e)
 	default:
-		fmt.Println(e)
 		fmt.Println("Unkown event applied on user")
 	}
 }
@@ -47,6 +52,12 @@ func (u *User) applyUserCreated(e *UserCreatedEvent) {
 
 func (u *User) applyUserGotOlder(e *UserGotOlderEvent) {
 	u.age = u.age + 1
+
+	u.uncommitedEvents = append(u.uncommitedEvents, e)
+}
+
+func (u *User) applyUsersNameChanged(e *UsersNameChangedEvent) {
+	u.name = e.newName
 
 	u.uncommitedEvents = append(u.uncommitedEvents, e)
 }

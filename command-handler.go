@@ -21,6 +21,8 @@ func (commandHandler *CommandHandler) handle(command Command) error {
 		return commandHandler.handleCreateUserCommand(c)
 	case *IncreaseUsersAgeCommand:
 		return commandHandler.handleIncreaseUsersAgeCommand(c)
+	case *ChangeUsersNameCommand:
+		return commandHandler.handleChangeUsersName(c)
 	default:
 		return &UnkownCommandError{fmt.Sprintf("Unkown command (%s) sent to command handler", reflect.TypeOf(c))}
 	}
@@ -41,6 +43,17 @@ func (commandHandler *CommandHandler) handleIncreaseUsersAgeCommand(c *IncreaseU
 	}
 
 	user.IncreaseAge()
+	commandHandler.repository.SaveUser(user)
+	return nil
+}
+
+func (commandHandler *CommandHandler) handleChangeUsersName(c *ChangeUsersNameCommand) error {
+	user, err := commandHandler.repository.GetUser(c.id)
+	if err != nil {
+		return err
+	}
+
+	user.ChangeName(c.newName)
 	commandHandler.repository.SaveUser(user)
 	return nil
 }

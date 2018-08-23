@@ -6,33 +6,27 @@ func main() {
 	repository := NewRepository()
 	commandHandler := NewCommandHandler(repository)
 
-	createUserCommand := &CreateUserCommand{"1", "Aidan Fewster", 20}
-	err := commandHandler.handle(createUserCommand)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
+	createUserCommand := &CreateUserCommand{"1", "Aidan Fewster", 25}
+	handleCommandOrPanic(commandHandler, createUserCommand)
 
 	increaseUsersAgeCommand := &IncreaseUsersAgeCommand{"1"}
-	commandHandler.handle(increaseUsersAgeCommand)
-	commandHandler.handle(increaseUsersAgeCommand)
-	commandHandler.handle(increaseUsersAgeCommand)
-	commandHandler.handle(increaseUsersAgeCommand)
-	commandHandler.handle(increaseUsersAgeCommand)
-	commandHandler.handle(increaseUsersAgeCommand)
-	commandHandler.handle(increaseUsersAgeCommand)
+	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
+	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
+	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
+	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
+	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
 
-	err = commandHandler.handle(increaseUsersAgeCommand)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
+	userNameChangeCommand := &ChangeUsersNameCommand{"1", "Bob Smith"}
+	handleCommandOrPanic(commandHandler, userNameChangeCommand)
 
-	user, err := repository.GetUser("1")
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-		return
-	}
-
+	user, _ := repository.GetUser("1")
+	fmt.Printf("Users name: %v\n", user.GetName())
 	fmt.Printf("Users age: %v\n", user.GetAge())
+}
+
+func handleCommandOrPanic(commandHandler *CommandHandler, command Command) {
+	err := commandHandler.handle(command)
+	if err != nil {
+		panic(err)
+	}
 }
