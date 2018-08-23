@@ -1,5 +1,10 @@
 package main
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type CommandHandler struct {
 	repository *Repository
 }
@@ -12,17 +17,30 @@ func NewCommandHandler(repository *Repository) *CommandHandler {
 
 func (commandHandler *CommandHandler) handle(command Command) error {
 	switch c := command.(type) {
-	case CreateUserCommand:
+	case *CreateUserCommand:
 		return commandHandler.handleCreateUserCommand(c)
+	case *IncreaseUsersAgeCommand:
+		return commandHandler.handleIncreaseUsersAgeCommand(c)
 	default:
-		return &UnkownCommandError{}
+		return &UnkownCommandError{fmt.Sprintf("Unkown command (%s) sent to command handler", reflect.TypeOf(c))}
 	}
 }
 
-func (commandHandler *CommandHandler) handleCreateUserCommand(c CreateUserCommand) error {
+func (commandHandler *CommandHandler) handleCreateUserCommand(c *CreateUserCommand) error {
 	user, err := NewUser(c.id, c.name, c.age)
 	if err == nil {
 		commandHandler.repository.SaveUser(user)
 	}
 	return err
+}
+
+func (commandHandler *CommandHandler) handleIncreaseUsersAgeCommand(c *IncreaseUsersAgeCommand) error {
+	user, err := commandHandler.repository.GetUser(c.id)
+	if err != nil {
+		return err
+	}
+
+	user.IncreaseAge()
+	commandHandler.repository.SaveUser(user)
+	return nil
 }

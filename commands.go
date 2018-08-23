@@ -19,8 +19,8 @@ type ChangeUsersNameCommand struct {
 
 func (c ChangeUsersNameCommand) ImplementsCommand() {}
 
-type AgeUserCommand struct {
+type IncreaseUsersAgeCommand struct {
 	id string
 }
 
-func (c AgeUserCommand) ImplementsCommand() {}
+func (c IncreaseUsersAgeCommand) ImplementsCommand() {}

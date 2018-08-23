@@ -6,8 +6,23 @@ func main() {
 	repository := NewRepository()
 	commandHandler := NewCommandHandler(repository)
 
-	createUserCommand := CreateUserCommand{"1", "Aidan Fewster", 20}
+	createUserCommand := &CreateUserCommand{"1", "Aidan Fewster", 20}
 	err := commandHandler.handle(createUserCommand)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return
+	}
+
+	increaseUsersAgeCommand := &IncreaseUsersAgeCommand{"1"}
+	commandHandler.handle(increaseUsersAgeCommand)
+	commandHandler.handle(increaseUsersAgeCommand)
+	commandHandler.handle(increaseUsersAgeCommand)
+	commandHandler.handle(increaseUsersAgeCommand)
+	commandHandler.handle(increaseUsersAgeCommand)
+	commandHandler.handle(increaseUsersAgeCommand)
+	commandHandler.handle(increaseUsersAgeCommand)
+
+	err = commandHandler.handle(increaseUsersAgeCommand)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
