@@ -1,26 +1,26 @@
-package main
+package eventsourcing
 
 type Event interface {
 	ImplementsEvent()
 }
 
 type UserCreatedEvent struct {
-	id   string
-	name string
-	age  int
+	Id   string
+	Name string
+	Age  int
 }
 
 func (e UserCreatedEvent) ImplementsEvent() {}
 
 type UsersNameChangedEvent struct {
-	id      string
-	newName string
+	Id      string
+	NewName string
 }
 
 func (e UsersNameChangedEvent) ImplementsEvent() {}
 
 type UserGotOlderEvent struct {
-	id string
+	Id string
 }
 
 func (e UserGotOlderEvent) ImplementsEvent() {}

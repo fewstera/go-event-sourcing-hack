@@ -1,6 +1,9 @@
-package main
+package eventsourcing
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 type Repository struct {
 	users map[string]*User
@@ -17,6 +20,16 @@ func (repository *Repository) SaveUser(user *User) {
 	_, userExistsInRepo := repository.users[userId]
 	if !userExistsInRepo {
 		repository.users[userId] = user
+	}
+
+	for _, event := range user.GetUncommitedEvents() {
+		json, err := json.Marshal(event)
+		if err != nil {
+			fmt.Printf("JSON error: %v\n", err)
+			panic("")
+		}
+
+		fmt.Printf("EVENT: %v\n", string(json))
 	}
 
 	user.MarkChangesAsCommitted()

@@ -1,4 +1,4 @@
-package main
+package eventsourcing
 
 type InvalidAgeError struct {
 	message string

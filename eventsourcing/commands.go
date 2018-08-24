@@ -1,26 +1,26 @@
-package main
+package eventsourcing
 
 type Command interface {
 	ImplementsCommand()
 }
 
 type CreateUserCommand struct {
-	id   string
-	name string
-	age  int
+	Id   string
+	Name string
+	Age  int
 }
 
 func (c CreateUserCommand) ImplementsCommand() {}
 
 type ChangeUsersNameCommand struct {
-	id      string
-	newName string
+	Id      string
+	NewName string
 }
 
 func (c ChangeUsersNameCommand) ImplementsCommand() {}
 
 type IncreaseUsersAgeCommand struct {
-	id string
+	Id string
 }
 
 func (c IncreaseUsersAgeCommand) ImplementsCommand() {}

@@ -1,31 +1,38 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/fewstera/go-event-sourcing/eventsourcing"
+	"github.com/fewstera/go-event-sourcing/server"
+)
 
 func main() {
-	repository := NewRepository()
-	commandHandler := NewCommandHandler(repository)
+	repository := eventsourcing.NewRepository()
+	commandHandler := eventsourcing.NewCommandHandler(repository)
 
-	createUserCommand := &CreateUserCommand{"1", "Aidan Fewster", 25}
+	createUserCommand := &eventsourcing.CreateUserCommand{"1", "Aidan Fewster", 25}
 	handleCommandOrPanic(commandHandler, createUserCommand)
 
-	increaseUsersAgeCommand := &IncreaseUsersAgeCommand{"1"}
+	increaseUsersAgeCommand := &eventsourcing.IncreaseUsersAgeCommand{"1"}
 	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
 	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
 	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
 	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
 	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
 
-	userNameChangeCommand := &ChangeUsersNameCommand{"1", "Bob Smith"}
+	userNameChangeCommand := &eventsourcing.ChangeUsersNameCommand{"1", "Bob Smith"}
 	handleCommandOrPanic(commandHandler, userNameChangeCommand)
 
 	user, _ := repository.GetUser("1")
 	fmt.Printf("Users name: %v\n", user.GetName())
 	fmt.Printf("Users age: %v\n", user.GetAge())
+
+	server.StartServer(commandHandler, repository)
 }
 
-func handleCommandOrPanic(commandHandler *CommandHandler, command Command) {
-	err := commandHandler.handle(command)
+func handleCommandOrPanic(commandHandler *eventsourcing.CommandHandler, command eventsourcing.Command) {
+	_, err := commandHandler.Handle(command)
 	if err != nil {
 		panic(err)
 	}
