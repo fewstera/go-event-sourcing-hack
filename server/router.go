@@ -20,14 +20,19 @@ var routes = Routes{
 		GetUserRouteHandler,
 	},
 	Route{
-		"GET",
-		"/users",
-		GetUsersRouteHandler,
-	},
-	Route{
 		"POST",
 		"/users",
 		PostUserRouteHandler,
+	},
+	Route{
+		"PATCH",
+		"/users/{id}",
+		PatchUserRouteHandler,
+	},
+	Route{
+		"POST",
+		"/users/{id}/increase-age",
+		PostIncreaseUserAgeRouteHandler,
 	},
 }
 
