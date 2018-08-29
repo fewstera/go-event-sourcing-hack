@@ -6,6 +6,7 @@ import (
 )
 
 type User struct {
+	eventNumber      int
 	id               string
 	name             string
 	age              int
@@ -18,21 +19,25 @@ func NewUser(id string, name string, age int) (*User, error) {
 	if age < 0 {
 		return nil, &InvalidAgeError{"Age is negative"}
 	}
-	u.apply(&UserCreatedEvent{id, name, age})
+	u.apply(NewUserCreatedEvent(1, id, name, age))
 	return u, nil
 }
 
 // Actions - These are called by command handlers, they can error but should not mutate state (except through calling apply)
 func (u *User) IncreaseAge() {
-	u.apply(&UserGotOlderEvent{u.id})
+	nextEventNumber := u.eventNumber + 1
+	u.apply(NewUserGotOlderEvent(nextEventNumber, u.id))
 }
 
 func (u *User) ChangeName(name string) {
-	u.apply(&UsersNameChangedEvent{u.id, name})
+	nextEventNumber := u.eventNumber + 1
+	u.apply(NewUsersNameChangedEvent(nextEventNumber, u.id, name))
 }
 
 // Apply methods - These should only mutate state, they are not allowed to error.
 func (u *User) apply(event Event) {
+	u.eventNumber = event.GetEventNumber()
+
 	switch e := event.(type) {
 	case *UserCreatedEvent:
 		u.applyUserCreated(e)

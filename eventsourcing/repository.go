@@ -1,17 +1,18 @@
 package eventsourcing
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
 type Repository struct {
-	users map[string]*User
+	users      map[string]*User
+	eventStore *EventStore
 }
 
-func NewRepository() *Repository {
+func NewRepository(eventStore *EventStore) *Repository {
 	repository := new(Repository)
 	repository.users = make(map[string]*User)
+	repository.eventStore = eventStore
 	return repository
 }
 
@@ -23,13 +24,7 @@ func (repository *Repository) SaveUser(user *User) {
 	}
 
 	for _, event := range user.GetUncommitedEvents() {
-		json, err := json.Marshal(event)
-		if err != nil {
-			fmt.Printf("JSON error: %v\n", err)
-			panic("")
-		}
-
-		fmt.Printf("EVENT: %v\n", string(json))
+		repository.eventStore.SaveEvent(event)
 	}
 
 	user.MarkChangesAsCommitted()
