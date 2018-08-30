@@ -3,11 +3,11 @@ package eventsourcing
 import "encoding/json"
 
 type Event interface {
-	GetStreamCategory() string
 	GetStreamId() string
 	GetEventNumber() int
 	GetEventType() string
 	GetData() ([]byte, error)
+	InitFromDbEvent(streamId string, eventNumber int, data []byte) error
 }
 
 type EventImplementation struct {
@@ -23,10 +23,6 @@ const (
 )
 
 // EVENT METHODS
-func (e *EventImplementation) GetStreamCategory() string {
-	return "USER"
-}
-
 func (e *EventImplementation) GetStreamId() string {
 	return e.Id
 }
@@ -65,6 +61,24 @@ func (e *UserCreatedEvent) GetData() ([]byte, error) {
 	})
 }
 
+func (e *UserCreatedEvent) InitFromDbEvent(streamId string, eventNumber int, data []byte) error {
+	var eventData struct {
+		Name string `json:"name"`
+		Age  int    `json:"age"`
+	}
+
+	err := json.Unmarshal(data, &eventData)
+	if err != nil {
+		return err
+	}
+
+	e.Id = streamId
+	e.EventNumber = eventNumber
+	e.Name = eventData.Name
+	e.Age = eventData.Age
+	return nil
+}
+
 // USER NAME CHANGE
 type UserNameChangedEvent struct {
 	EventImplementation
@@ -76,6 +90,7 @@ func NewUserNameChangedEvent(eventNumber int, id string, newName string) *UserNa
 	userNameChangedEvent.EventNumber = eventNumber
 	userNameChangedEvent.Id = id
 	userNameChangedEvent.NewName = newName
+
 	return userNameChangedEvent
 }
 
@@ -85,10 +100,26 @@ func (e *UserNameChangedEvent) GetEventType() string {
 
 func (e *UserNameChangedEvent) GetData() ([]byte, error) {
 	return json.Marshal(struct {
-		NewName string `json:"name"`
+		NewName string `json:"newName"`
 	}{
 		NewName: e.NewName,
 	})
+}
+
+func (e *UserNameChangedEvent) InitFromDbEvent(streamId string, eventNumber int, data []byte) error {
+	var eventData struct {
+		NewName string `json:"name"`
+	}
+
+	err := json.Unmarshal(data, &eventData)
+	if err != nil {
+		return err
+	}
+
+	e.Id = streamId
+	e.EventNumber = eventNumber
+	e.NewName = eventData.NewName
+	return nil
 }
 
 // USER GOT OLDER
@@ -109,4 +140,10 @@ func (e *UserGotOlderEvent) GetEventType() string {
 
 func (e *UserGotOlderEvent) GetData() ([]byte, error) {
 	return []byte("{}"), nil
+}
+
+func (e *UserGotOlderEvent) InitFromDbEvent(streamId string, eventNumber int, data []byte) error {
+	e.Id = streamId
+	e.EventNumber = eventNumber
+	return nil
 }

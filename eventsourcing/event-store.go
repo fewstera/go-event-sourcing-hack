@@ -14,6 +14,8 @@ type EventStore struct {
 	fetchMoreStmt   *sql.Stmt
 }
 
+const EventStoreStreamCategory string = "USER"
+
 func NewEventStore(db *sql.DB, projection *Projection) *EventStore {
 	eventStore := new(EventStore)
 	eventStore.db = db
@@ -34,7 +36,7 @@ func (eventStore *EventStore) SaveEvent(event Event) error {
 
 	_, err = eventStore.db.Exec(
 		"INSERT INTO `event` (stream_category, stream_id, event_number, event_type, data) VALUES (?, ?, ?, ?, ?)",
-		event.GetStreamCategory(), event.GetStreamId(), event.GetEventNumber(), event.GetEventType(), string(dataBytes),
+		EventStoreStreamCategory, event.GetStreamId(), event.GetEventNumber(), event.GetEventType(), string(dataBytes),
 	)
 
 	if err != nil {
@@ -46,7 +48,8 @@ func (eventStore *EventStore) SaveEvent(event Event) error {
 }
 
 func (eventStore *EventStore) prepareFetchMoreStatement() *sql.Stmt {
-	stmt, err := eventStore.db.Prepare("SELECT position, stream_category, event_number, event_type, data FROM event WHERE position > ? LIMIT ?")
+	sql := fmt.Sprintf("SELECT position, event_type, stream_id, event_number, data FROM event WHERE stream_category = '%v' AND position > ? LIMIT ?", EventStoreStreamCategory)
+	stmt, err := eventStore.db.Prepare(sql)
 	if err != nil {
 		panic(err)
 	}
@@ -64,26 +67,29 @@ func (eventStore *EventStore) fetchMoreRecentEvents() {
 	defer rows.Close()
 	for rows.Next() {
 		var position int
-		var streamCategory string
-		var eventNumber int
 		var eventType string
-		var data string
+		var streamId string
+		var eventNumber int
+		var data []byte
 
-		err := rows.Scan(&position, &streamCategory, &eventNumber, &eventType, &data)
+		err := rows.Scan(&position, &eventType, &streamId, &eventNumber, &data)
 		if err != nil {
 			eventStore.handleFetchMoreError(err)
 			return
 		}
 
-		event, err := eventStore.parseDbEvent(position, streamCategory, eventNumber, eventType, data)
+		event, err := eventStore.parseDbEvent(eventType, streamId, eventNumber, data)
 		if err != nil {
 			eventStore.handleFetchMoreError(err)
 			return
 		}
-		err = eventStore.projection.Apply(event)
-		if err != nil {
-			eventStore.handleFetchMoreError(err)
-			return
+
+		if event != nil {
+			err = eventStore.projection.Apply(event)
+			if err != nil {
+				eventStore.handleFetchMoreError(err)
+				return
+			}
 		}
 
 		eventStore.currentPosition = position
@@ -97,8 +103,27 @@ func (eventStore *EventStore) fetchMoreRecentEvents() {
 	eventStore.fetchMoreRecentEvents()
 }
 
-func (eventStore *EventStore) parseDbEvent(position int, streamCategory string, eventNumber int, eventType string, data string) (Event, error) {
-	var event Event = nil
+func (eventStore *EventStore) parseDbEvent(eventType string, streamId string, eventNumber int, data []byte) (Event, error) {
+	var event Event
+	switch eventType {
+	case EventTypeUserCreated:
+		event = new(UserCreatedEvent)
+	case EventTypeUserGotOlder:
+		event = new(UserGotOlderEvent)
+	case EventTypeUserNameChanged:
+		event = new(UserNameChangedEvent)
+	default:
+		fmt.Println("Unkown event %v\n", eventType)
+		return nil, nil
+	}
+
+	fmt.Println("Event %v\n", eventType)
+
+	err := event.InitFromDbEvent(streamId, eventNumber, data)
+	if err != nil {
+		return nil, err
+	}
+
 	return event, nil
 }
 
