@@ -43,7 +43,7 @@ curl http://localhost:8080/users/{userId}/increase-age -XPOST
 Change a users name
 
 ```
-curl http://localhost:8080/users/{userId}/increase-age -XPATCH -d '{"name": "Aidan Wynne Fewster"}'
+curl http://localhost:8080/users/{userId} -XPATCH -d '{"name": "Aidan Wynne Fewster"}'
 ```
 
 ## Event sourcing
