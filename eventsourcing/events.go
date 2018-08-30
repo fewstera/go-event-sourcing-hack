@@ -15,6 +15,13 @@ type EventImplementation struct {
 	Id          string
 }
 
+// Event types
+const (
+	EventTypeUserCreated     string = "USER_CREATED"
+	EventTypeUserNameChanged string = "USER_NAME_CHANGED"
+	EventTypeUserGotOlder    string = "USER_GOT_OLDER"
+)
+
 // EVENT METHODS
 func (e *EventImplementation) GetStreamCategory() string {
 	return "USER"
@@ -45,7 +52,7 @@ func NewUserCreatedEvent(eventNumber int, id string, name string, age int) *User
 }
 
 func (e *UserCreatedEvent) GetEventType() string {
-	return "USER_CREATED"
+	return EventTypeUserCreated
 }
 
 func (e *UserCreatedEvent) GetData() ([]byte, error) {
@@ -59,24 +66,24 @@ func (e *UserCreatedEvent) GetData() ([]byte, error) {
 }
 
 // USER NAME CHANGE
-type UsersNameChangedEvent struct {
+type UserNameChangedEvent struct {
 	EventImplementation
 	NewName string
 }
 
-func NewUsersNameChangedEvent(eventNumber int, id string, newName string) *UsersNameChangedEvent {
-	usersNameChangedEvent := new(UsersNameChangedEvent)
-	usersNameChangedEvent.EventNumber = eventNumber
-	usersNameChangedEvent.Id = id
-	usersNameChangedEvent.NewName = newName
-	return usersNameChangedEvent
+func NewUserNameChangedEvent(eventNumber int, id string, newName string) *UserNameChangedEvent {
+	userNameChangedEvent := new(UserNameChangedEvent)
+	userNameChangedEvent.EventNumber = eventNumber
+	userNameChangedEvent.Id = id
+	userNameChangedEvent.NewName = newName
+	return userNameChangedEvent
 }
 
-func (e *UsersNameChangedEvent) GetEventType() string {
-	return "USER_NAME_CHANGE"
+func (e *UserNameChangedEvent) GetEventType() string {
+	return EventTypeUserNameChanged
 }
 
-func (e *UsersNameChangedEvent) GetData() ([]byte, error) {
+func (e *UserNameChangedEvent) GetData() ([]byte, error) {
 	return json.Marshal(struct {
 		NewName string `json:"name"`
 	}{
@@ -97,7 +104,7 @@ func NewUserGotOlderEvent(eventNumber int, id string) *UserGotOlderEvent {
 }
 
 func (e *UserGotOlderEvent) GetEventType() string {
-	return "USER_GOT_OLDER"
+	return EventTypeUserNameChanged
 }
 
 func (e *UserGotOlderEvent) GetData() ([]byte, error) {

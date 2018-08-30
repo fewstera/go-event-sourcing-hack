@@ -6,32 +6,30 @@ import (
 )
 
 type User struct {
-	eventNumber      int
-	id               string
-	name             string
-	age              int
-	uncommitedEvents []Event
+	eventNumber int
+	id          string
+	name        string
+	age         int
 }
 
 // Constuctor
-func NewUser(id string, name string, age int) (*User, error) {
-	u := new(User)
+func NewUser(id string, name string, age int) (*UserCreatedEvent, error) {
 	if age < 0 {
 		return nil, &InvalidAgeError{"Age is negative"}
 	}
-	u.apply(NewUserCreatedEvent(1, id, name, age))
-	return u, nil
+
+	return NewUserCreatedEvent(1, id, name, age), nil
 }
 
 // Actions - These are called by command handlers, they can error but should not mutate state (except through calling apply)
-func (u *User) IncreaseAge() {
+func (u *User) IncreaseAge() *UserGotOlderEvent {
 	nextEventNumber := u.eventNumber + 1
-	u.apply(NewUserGotOlderEvent(nextEventNumber, u.id))
+	return NewUserGotOlderEvent(nextEventNumber, u.id)
 }
 
-func (u *User) ChangeName(name string) {
+func (u *User) ChangeName(name string) *UserNameChangedEvent {
 	nextEventNumber := u.eventNumber + 1
-	u.apply(NewUsersNameChangedEvent(nextEventNumber, u.id, name))
+	return NewUserNameChangedEvent(nextEventNumber, u.id, name)
 }
 
 // Apply methods - These should only mutate state, they are not allowed to error.
@@ -43,7 +41,7 @@ func (u *User) apply(event Event) {
 		u.applyUserCreated(e)
 	case *UserGotOlderEvent:
 		u.applyUserGotOlder(e)
-	case *UsersNameChangedEvent:
+	case *UserNameChangedEvent:
 		u.applyUsersNameChanged(e)
 	default:
 		fmt.Println("Unkown event applied on user")
@@ -54,29 +52,14 @@ func (u *User) applyUserCreated(e *UserCreatedEvent) {
 	u.id = e.Id
 	u.age = e.Age
 	u.name = e.Name
-
-	u.uncommitedEvents = append(u.uncommitedEvents, e)
 }
 
 func (u *User) applyUserGotOlder(e *UserGotOlderEvent) {
 	u.age = u.age + 1
-
-	u.uncommitedEvents = append(u.uncommitedEvents, e)
 }
 
-func (u *User) applyUsersNameChanged(e *UsersNameChangedEvent) {
+func (u *User) applyUsersNameChanged(e *UserNameChangedEvent) {
 	u.name = e.NewName
-
-	u.uncommitedEvents = append(u.uncommitedEvents, e)
-}
-
-// Commited events methods
-func (u *User) MarkChangesAsCommitted() {
-	u.uncommitedEvents = nil
-}
-
-func (u *User) GetUncommitedEvents() []Event {
-	return u.uncommitedEvents
 }
 
 // Getters

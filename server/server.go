@@ -7,11 +7,11 @@ import (
 )
 
 var commandHandler *eventsourcing.CommandHandler
-var repository *eventsourcing.Repository
+var projection *eventsourcing.Projection
 
-func StartServer(ch *eventsourcing.CommandHandler, repo *eventsourcing.Repository) {
+func StartServer(ch *eventsourcing.CommandHandler, prjction *eventsourcing.Projection) {
 	commandHandler = ch
-	repository = repo
+	projection = prjction
 
 	router := NewRouter()
 	http.ListenAndServe(":8080", router)

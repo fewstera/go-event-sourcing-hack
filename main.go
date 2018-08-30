@@ -13,28 +13,13 @@ import _ "github.com/go-sql-driver/mysql"
 func main() {
 	db := initDb()
 
-	eventStore := eventsourcing.NewEventStore(db)
-	repository := eventsourcing.NewRepository(eventStore)
-	commandHandler := eventsourcing.NewCommandHandler(repository)
+	projection := eventsourcing.NewProjection()
+	eventStore := eventsourcing.NewEventStore(db, projection)
 
-	createUserCommand := &eventsourcing.CreateUserCommand{"1", "Aidan Fewster", 25}
-	handleCommandOrPanic(commandHandler, createUserCommand)
+	commandHandler := eventsourcing.NewCommandHandler(eventStore, projection)
 
-	increaseUsersAgeCommand := &eventsourcing.IncreaseUsersAgeCommand{"1"}
-	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
-	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
-	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
-	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
-	handleCommandOrPanic(commandHandler, increaseUsersAgeCommand)
-
-	userNameChangeCommand := &eventsourcing.ChangeUsersNameCommand{"1", "Bob Smith"}
-	handleCommandOrPanic(commandHandler, userNameChangeCommand)
-
-	user, _ := repository.GetUser("1")
-	fmt.Printf("Users name: %v\n", user.GetName())
-	fmt.Printf("Users age: %v\n", user.GetAge())
-
-	server.StartServer(commandHandler, repository)
+	fmt.Println("Starting HTTP server")
+	server.StartServer(commandHandler, projection)
 }
 
 func handleCommandOrPanic(commandHandler *eventsourcing.CommandHandler, command eventsourcing.Command) {

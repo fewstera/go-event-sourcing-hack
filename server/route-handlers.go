@@ -19,13 +19,17 @@ type CreateUserPayload struct {
 
 func GetUserRouteHandler(w http.ResponseWriter, r *http.Request) {
 	userId := mux.Vars(r)["id"]
-	user, err := repository.GetUser(userId)
+	user, err := projection.GetUser(userId)
 	if err != nil {
 		writeErrorResponse(err, w)
 		return
 	}
 
-	writeUserJsonResponse(user, w)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(user); err != nil {
+		writeErrorResponse(err, w)
+	}
 }
 
 func PostUserRouteHandler(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +105,7 @@ func PostIncreaseUserAgeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	writeUserJsonResponse(user, w)
 }
 
-func writeUserJsonResponse(user *eventsourcing.User, w http.ResponseWriter) {
+func writeUserJsonResponse(user eventsourcing.Event, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(user); err != nil {
