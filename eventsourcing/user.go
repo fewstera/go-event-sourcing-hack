@@ -33,7 +33,7 @@ func (u *User) ChangeName(name string) *UserNameChangedEvent {
 }
 
 // Apply methods - These should only mutate state, they are not allowed to error.
-func (u *User) apply(event Event) {
+func (u *User) Apply(event Event) {
 	u.eventNumber = event.GetEventNumber()
 
 	switch e := event.(type) {

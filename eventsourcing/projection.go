@@ -15,7 +15,20 @@ func NewProjection() *Projection {
 }
 
 func (projection *Projection) Apply(event Event) error {
-	fmt.Println(event)
+	userId := event.GetStreamId()
+	user, err := projection.GetUser(userId)
+	if err != nil {
+		switch err.(type) {
+		case *UserNotFoundError:
+			// If user doesn't already exist - create it
+			projection.users[userId] = new(User)
+			user = projection.users[userId]
+		default:
+			return err
+		}
+	}
+
+	user.Apply(event)
 	return nil
 }
 

@@ -113,11 +113,9 @@ func (eventStore *EventStore) parseDbEvent(eventType string, streamId string, ev
 	case EventTypeUserNameChanged:
 		event = new(UserNameChangedEvent)
 	default:
-		fmt.Println("Unkown event %v\n", eventType)
+		fmt.Printf("Unkown event %v\n", eventType)
 		return nil, nil
 	}
-
-	fmt.Println("Event %v\n", eventType)
 
 	err := event.InitFromDbEvent(streamId, eventNumber, data)
 	if err != nil {

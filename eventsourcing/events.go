@@ -108,7 +108,7 @@ func (e *UserNameChangedEvent) GetData() ([]byte, error) {
 
 func (e *UserNameChangedEvent) InitFromDbEvent(streamId string, eventNumber int, data []byte) error {
 	var eventData struct {
-		NewName string `json:"name"`
+		NewName string `json:"newName"`
 	}
 
 	err := json.Unmarshal(data, &eventData)
@@ -135,7 +135,7 @@ func NewUserGotOlderEvent(eventNumber int, id string) *UserGotOlderEvent {
 }
 
 func (e *UserGotOlderEvent) GetEventType() string {
-	return EventTypeUserNameChanged
+	return EventTypeUserGotOlder
 }
 
 func (e *UserGotOlderEvent) GetData() ([]byte, error) {
