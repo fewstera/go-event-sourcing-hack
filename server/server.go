@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/fewstera/go-event-sourcing/eventsourcing"
+	"github.com/fewstera/go-event-sourcing-hack/eventsourcing"
 )
 
 var commandHandler *eventsourcing.CommandHandler

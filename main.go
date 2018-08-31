@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/fewstera/go-event-sourcing/eventsourcing"
-	"github.com/fewstera/go-event-sourcing/server"
+	"github.com/fewstera/go-event-sourcing-hack/eventsourcing"
+	"github.com/fewstera/go-event-sourcing-hack/server"
 )
 
 import _ "github.com/go-sql-driver/mysql"

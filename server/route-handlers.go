@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/fewstera/go-event-sourcing/eventsourcing"
+	"github.com/fewstera/go-event-sourcing-hack/eventsourcing"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 )

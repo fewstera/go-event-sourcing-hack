@@ -40,6 +40,7 @@ func (commandHandler *CommandHandler) handleCreateUserCommand(c *CreateUserComma
 		return nil, err
 	}
 
+	fmt.Println("Saved user event")
 	return event, nil
 }
 
@@ -55,6 +56,8 @@ func (commandHandler *CommandHandler) handleIncreaseUsersAgeCommand(c *IncreaseU
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Saved user event")
 
 	return event, nil
 }

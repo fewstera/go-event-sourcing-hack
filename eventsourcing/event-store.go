@@ -85,6 +85,7 @@ func (eventStore *EventStore) fetchMoreRecentEvents() {
 		}
 
 		if event != nil {
+			fmt.Println("Got new event")
 			err = eventStore.projection.Apply(event)
 			if err != nil {
 				eventStore.handleFetchMoreError(err)
