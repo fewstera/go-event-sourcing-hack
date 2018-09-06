@@ -3,6 +3,7 @@ package eventsourcing
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 )
 
 type User struct {
@@ -10,6 +11,7 @@ type User struct {
 	id          string
 	name        string
 	age         int
+	sync.RWMutex
 }
 
 // Constuctor
@@ -23,13 +25,19 @@ func NewUser(id string, name string, age int) (*UserCreatedEvent, error) {
 
 // Actions - These are called by command handlers, they can error but should not mutate state (except through calling apply)
 func (u *User) IncreaseAge() *UserGotOlderEvent {
+	u.RLock()
 	nextEventNumber := u.eventNumber + 1
-	return NewUserGotOlderEvent(nextEventNumber, u.id)
+	event := NewUserGotOlderEvent(nextEventNumber, u.id)
+	u.RUnlock()
+	return event
 }
 
 func (u *User) ChangeName(name string) *UserNameChangedEvent {
+	u.RLock()
 	nextEventNumber := u.eventNumber + 1
-	return NewUserNameChangedEvent(nextEventNumber, u.id, name)
+	event := NewUserNameChangedEvent(nextEventNumber, u.id, name)
+	u.RUnlock()
+	return event
 }
 
 // Apply methods - These should only mutate state, they are not allowed to error.
@@ -49,34 +57,50 @@ func (u *User) Apply(event Event) {
 }
 
 func (u *User) applyUserCreated(e *UserCreatedEvent) {
+	u.Lock()
 	u.id = e.Id
 	u.age = e.Age
 	u.name = e.Name
+	u.Unlock()
 }
 
 func (u *User) applyUserGotOlder(e *UserGotOlderEvent) {
+	u.Lock()
 	u.age = u.age + 1
+	u.Unlock()
 }
 
 func (u *User) applyUsersNameChanged(e *UserNameChangedEvent) {
+	u.Lock()
 	u.name = e.NewName
+	u.Unlock()
 }
 
 // Getters
 func (u *User) GetId() string {
-	return u.id
+	u.RLock()
+	id := u.id
+	u.RUnlock()
+	return id
 }
 
 func (u *User) GetAge() int {
-	return u.age
+	u.RLock()
+	age := u.age
+	u.RUnlock()
+	return age
 }
 
 func (u *User) GetName() string {
-	return u.name
+	u.RLock()
+	name := u.name
+	u.RUnlock()
+	return name
 }
 
 func (u *User) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
+	u.RLock()
+	userJson, error := json.Marshal(struct {
 		Id   string `json:"id"`
 		Name string `json:"name"`
 		Age  int    `json:"age"`
@@ -85,4 +109,6 @@ func (u *User) MarshalJSON() ([]byte, error) {
 		Age:  u.age,
 		Name: u.name,
 	})
+	u.RUnlock()
+	return userJson, error
 }

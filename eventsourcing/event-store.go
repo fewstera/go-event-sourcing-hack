@@ -101,6 +101,7 @@ func (eventStore *EventStore) fetchMoreRecentEvents() {
 		return
 	}
 
+	time.Sleep(time.Duration(20) * time.Millisecond)
 	eventStore.fetchMoreRecentEvents()
 }
 
