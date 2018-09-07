@@ -46,13 +46,13 @@ func PostUserRouteHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := uuid.Must(uuid.NewV4()).String()
 	createUserCommand := &eventsourcing.CreateUserCommand{id, createUserPayload.Name, createUserPayload.Age}
-	user, err := commandHandler.Handle(createUserCommand)
+	event, err := commandHandler.Handle(createUserCommand)
 	if err != nil {
 		writeErrorResponse(err, w)
 		return
 	}
 
-	writeUserJsonResponse(user, w)
+	writeEventJsonResponse(event, w)
 }
 
 func PatchUserRouteHandler(w http.ResponseWriter, r *http.Request) {
@@ -83,32 +83,32 @@ func PatchUserRouteHandler(w http.ResponseWriter, r *http.Request) {
 
 	userId := mux.Vars(r)["id"]
 	changeUsersNameCommand := &eventsourcing.ChangeUsersNameCommand{userId, newName}
-	user, err := commandHandler.Handle(changeUsersNameCommand)
+	event, err := commandHandler.Handle(changeUsersNameCommand)
 	if err != nil {
 		writeErrorResponse(err, w)
 		return
 	}
 
-	writeUserJsonResponse(user, w)
+	writeEventJsonResponse(event, w)
 }
 
 func PostIncreaseUserAgeRouteHandler(w http.ResponseWriter, r *http.Request) {
 	userId := mux.Vars(r)["id"]
 
 	increaseUsersAgeCommand := &eventsourcing.IncreaseUsersAgeCommand{userId}
-	user, err := commandHandler.Handle(increaseUsersAgeCommand)
+	event, err := commandHandler.Handle(increaseUsersAgeCommand)
 	if err != nil {
 		writeErrorResponse(err, w)
 		return
 	}
 
-	writeUserJsonResponse(user, w)
+	writeEventJsonResponse(event, w)
 }
 
-func writeUserJsonResponse(user eventsourcing.Event, w http.ResponseWriter) {
+func writeEventJsonResponse(event eventsourcing.Event, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(user); err != nil {
+	if err := json.NewEncoder(w).Encode(event); err != nil {
 		writeErrorResponse(err, w)
 	}
 }

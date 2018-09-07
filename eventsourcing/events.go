@@ -11,8 +11,9 @@ type Event interface {
 }
 
 type EventImplementation struct {
-	EventNumber int
-	Id          string
+	EventNumber int    `json:"eventNumber"`
+	EventType   string `json:"eventType"`
+	Id          string `json:"id"`
 }
 
 // Event types
@@ -31,24 +32,25 @@ func (e *EventImplementation) GetEventNumber() int {
 	return e.EventNumber
 }
 
+func (e *EventImplementation) GetEventType() string {
+	return e.EventType
+}
+
 // CREATE USER EVENT
 type UserCreatedEvent struct {
 	EventImplementation
-	Name string
-	Age  int
+	Name string `json:"name"`
+	Age  int    `json:"age"`
 }
 
 func NewUserCreatedEvent(eventNumber int, id string, name string, age int) *UserCreatedEvent {
 	userCreatedEvent := new(UserCreatedEvent)
+	userCreatedEvent.EventType = EventTypeUserCreated
 	userCreatedEvent.EventNumber = eventNumber
 	userCreatedEvent.Id = id
 	userCreatedEvent.Name = name
 	userCreatedEvent.Age = age
 	return userCreatedEvent
-}
-
-func (e *UserCreatedEvent) GetEventType() string {
-	return EventTypeUserCreated
 }
 
 func (e *UserCreatedEvent) GetData() ([]byte, error) {
@@ -74,6 +76,7 @@ func (e *UserCreatedEvent) InitFromDbEvent(streamId string, eventNumber int, dat
 
 	e.Id = streamId
 	e.EventNumber = eventNumber
+	e.EventType = EventTypeUserCreated
 	e.Name = eventData.Name
 	e.Age = eventData.Age
 	return nil
@@ -82,20 +85,17 @@ func (e *UserCreatedEvent) InitFromDbEvent(streamId string, eventNumber int, dat
 // USER NAME CHANGE
 type UserNameChangedEvent struct {
 	EventImplementation
-	NewName string
+	NewName string `json:"newName"`
 }
 
 func NewUserNameChangedEvent(eventNumber int, id string, newName string) *UserNameChangedEvent {
 	userNameChangedEvent := new(UserNameChangedEvent)
+	userNameChangedEvent.EventType = EventTypeUserNameChanged
 	userNameChangedEvent.EventNumber = eventNumber
 	userNameChangedEvent.Id = id
 	userNameChangedEvent.NewName = newName
 
 	return userNameChangedEvent
-}
-
-func (e *UserNameChangedEvent) GetEventType() string {
-	return EventTypeUserNameChanged
 }
 
 func (e *UserNameChangedEvent) GetData() ([]byte, error) {
@@ -117,6 +117,7 @@ func (e *UserNameChangedEvent) InitFromDbEvent(streamId string, eventNumber int,
 	}
 
 	e.Id = streamId
+	e.EventType = EventTypeUserNameChanged
 	e.EventNumber = eventNumber
 	e.NewName = eventData.NewName
 	return nil
@@ -129,13 +130,10 @@ type UserGotOlderEvent struct {
 
 func NewUserGotOlderEvent(eventNumber int, id string) *UserGotOlderEvent {
 	userGotOlderEvent := new(UserGotOlderEvent)
+	userGotOlderEvent.EventType = EventTypeUserGotOlder
 	userGotOlderEvent.EventNumber = eventNumber
 	userGotOlderEvent.Id = id
 	return userGotOlderEvent
-}
-
-func (e *UserGotOlderEvent) GetEventType() string {
-	return EventTypeUserGotOlder
 }
 
 func (e *UserGotOlderEvent) GetData() ([]byte, error) {
@@ -144,6 +142,7 @@ func (e *UserGotOlderEvent) GetData() ([]byte, error) {
 
 func (e *UserGotOlderEvent) InitFromDbEvent(streamId string, eventNumber int, data []byte) error {
 	e.Id = streamId
+	e.EventType = EventTypeUserGotOlder
 	e.EventNumber = eventNumber
 	return nil
 }

@@ -7,11 +7,11 @@ import (
 )
 
 type User struct {
-	eventNumber int
-	id          string
-	name        string
-	age         int
-	sync.RWMutex
+	EventNumber int
+	Id          string
+	Name        string
+	Age         int
+	mutex       sync.RWMutex
 }
 
 // Constuctor
@@ -25,24 +25,24 @@ func NewUser(id string, name string, age int) (*UserCreatedEvent, error) {
 
 // Actions - These are called by command handlers, they can error but should not mutate state (except through calling apply)
 func (u *User) IncreaseAge() *UserGotOlderEvent {
-	u.RLock()
-	nextEventNumber := u.eventNumber + 1
-	event := NewUserGotOlderEvent(nextEventNumber, u.id)
-	u.RUnlock()
+	u.mutex.RLock()
+	nextEventNumber := u.EventNumber + 1
+	event := NewUserGotOlderEvent(nextEventNumber, u.Id)
+	u.mutex.RUnlock()
 	return event
 }
 
 func (u *User) ChangeName(name string) *UserNameChangedEvent {
-	u.RLock()
-	nextEventNumber := u.eventNumber + 1
-	event := NewUserNameChangedEvent(nextEventNumber, u.id, name)
-	u.RUnlock()
+	u.mutex.RLock()
+	nextEventNumber := u.EventNumber + 1
+	event := NewUserNameChangedEvent(nextEventNumber, u.Id, name)
+	u.mutex.RUnlock()
 	return event
 }
 
 // Apply methods - These should only mutate state, they are not allowed to error.
 func (u *User) Apply(event Event) {
-	u.eventNumber = event.GetEventNumber()
+	u.EventNumber = event.GetEventNumber()
 
 	switch e := event.(type) {
 	case *UserCreatedEvent:
@@ -57,58 +57,58 @@ func (u *User) Apply(event Event) {
 }
 
 func (u *User) applyUserCreated(e *UserCreatedEvent) {
-	u.Lock()
-	u.id = e.Id
-	u.age = e.Age
-	u.name = e.Name
-	u.Unlock()
+	u.mutex.Lock()
+	u.Id = e.Id
+	u.Age = e.Age
+	u.Name = e.Name
+	u.mutex.Unlock()
 }
 
 func (u *User) applyUserGotOlder(e *UserGotOlderEvent) {
-	u.Lock()
-	u.age = u.age + 1
-	u.Unlock()
+	u.mutex.Lock()
+	u.Age = u.Age + 1
+	u.mutex.Unlock()
 }
 
 func (u *User) applyUsersNameChanged(e *UserNameChangedEvent) {
-	u.Lock()
-	u.name = e.NewName
-	u.Unlock()
+	u.mutex.Lock()
+	u.Name = e.NewName
+	u.mutex.Unlock()
 }
 
 // Getters
 func (u *User) GetId() string {
-	u.RLock()
-	id := u.id
-	u.RUnlock()
+	u.mutex.RLock()
+	id := u.Id
+	u.mutex.RUnlock()
 	return id
 }
 
 func (u *User) GetAge() int {
-	u.RLock()
-	age := u.age
-	u.RUnlock()
+	u.mutex.RLock()
+	age := u.Age
+	u.mutex.RUnlock()
 	return age
 }
 
 func (u *User) GetName() string {
-	u.RLock()
-	name := u.name
-	u.RUnlock()
+	u.mutex.RLock()
+	name := u.Name
+	u.mutex.RUnlock()
 	return name
 }
 
 func (u *User) MarshalJSON() ([]byte, error) {
-	u.RLock()
+	u.mutex.RLock()
 	userJson, error := json.Marshal(struct {
 		Id   string `json:"id"`
 		Name string `json:"name"`
 		Age  int    `json:"age"`
 	}{
-		Id:   u.id,
-		Age:  u.age,
-		Name: u.name,
+		Id:   u.Id,
+		Age:  u.Age,
+		Name: u.Name,
 	})
-	u.RUnlock()
+	u.mutex.RUnlock()
 	return userJson, error
 }

@@ -5,12 +5,12 @@ import (
 )
 
 type Projection struct {
-	users map[string]*User
+	Users map[string]*User
 }
 
 func NewProjection() *Projection {
 	projection := new(Projection)
-	projection.users = make(map[string]*User)
+	projection.Users = make(map[string]*User)
 	return projection
 }
 
@@ -21,8 +21,8 @@ func (projection *Projection) Apply(event Event) error {
 		switch err.(type) {
 		case *UserNotFoundError:
 			// If user doesn't already exist - create it
-			projection.users[userId] = new(User)
-			user = projection.users[userId]
+			projection.Users[userId] = new(User)
+			user = projection.Users[userId]
 		default:
 			return err
 		}
@@ -33,12 +33,12 @@ func (projection *Projection) Apply(event Event) error {
 }
 
 func (projection *Projection) GetUser(userId string) (*User, error) {
-	_, userExistsInRepo := projection.users[userId]
+	_, userExistsInRepo := projection.Users[userId]
 	if !userExistsInRepo {
 		return nil, &UserNotFoundError{fmt.Sprintf("User id %v not found", userId)}
 	}
 
-	user := projection.users[userId]
+	user := projection.Users[userId]
 	return user, nil
 
 }
