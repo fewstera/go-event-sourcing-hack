@@ -13,8 +13,9 @@ import _ "github.com/go-sql-driver/mysql"
 func main() {
 	db := initDb()
 
+	snapshots := eventsourcing.NewSnapshots(db)
 	projection := eventsourcing.NewProjection()
-	eventStore := eventsourcing.NewEventStore(db, projection)
+	eventStore := eventsourcing.NewEventStore(db, projection, snapshots)
 
 	commandHandler := eventsourcing.NewCommandHandler(eventStore, projection)
 
