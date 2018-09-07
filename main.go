@@ -11,12 +11,19 @@ import (
 import _ "github.com/go-sql-driver/mysql"
 
 func main() {
+	var projection *eventsourcing.Projection
 	db := initDb()
 
 	snapshots := eventsourcing.NewSnapshots(db)
-	projection := eventsourcing.NewProjection()
-	eventStore := eventsourcing.NewEventStore(db, projection, snapshots)
+	snapshotState := snapshots.GetStateFromLatestSnapshot()
+	if snapshotState.Projection != nil {
+		projection = snapshotState.Projection
+		fmt.Printf("Start up from a snapshot. Current position %v\n", snapshotState.Position)
+	} else {
+		projection = eventsourcing.NewProjection()
+	}
 
+	eventStore := eventsourcing.NewEventStore(db, projection, snapshots, snapshotState.Position)
 	commandHandler := eventsourcing.NewCommandHandler(eventStore, projection)
 
 	fmt.Println("Starting HTTP server")

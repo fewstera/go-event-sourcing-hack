@@ -17,11 +17,12 @@ type EventStore struct {
 
 const EventStoreStreamCategory string = "USER"
 
-func NewEventStore(db *sql.DB, projection *Projection, snapshots *Snapshots) *EventStore {
+func NewEventStore(db *sql.DB, projection *Projection, snapshots *Snapshots, startPosition int) *EventStore {
 	eventStore := new(EventStore)
 	eventStore.db = db
 	eventStore.projection = projection
 	eventStore.snapshots = snapshots
+	eventStore.currentPosition = startPosition
 
 	eventStore.fetchMoreStmt = eventStore.prepareFetchMoreStatement()
 

@@ -13,7 +13,14 @@ type Snapshots struct {
 	latestSnapshotPositionStmt *sql.Stmt
 }
 
-const EventsBetweenSnapshots int = 2
+type SnapshotState struct {
+	Position   int
+	Projection *Projection
+}
+
+const EventsBetweenSnapshots int = 10
+const SnapshotStatusCreating string = "CREATING_SNAPSHOT"
+const SnapshotStatusComplete string = "SNAPSHOT_COMPLETE"
 
 func NewSnapshots(db *sql.DB) *Snapshots {
 	s := new(Snapshots)
@@ -21,6 +28,37 @@ func NewSnapshots(db *sql.DB) *Snapshots {
 	s.latestSnapshotPositionStmt = s.prepareGetLatestSnapshotPosition()
 
 	return s
+}
+
+func (s *Snapshots) GetStateFromLatestSnapshot() *SnapshotState {
+	var position int
+	var location string
+
+	err := s.db.QueryRow("SELECT position, location FROM snapshot WHERE `status` = ?  ORDER BY `position` DESC LIMIT 1", SnapshotStatusComplete).Scan(&position, &location)
+	if err != nil {
+		if err != sql.ErrNoRows {
+			fmt.Printf("Error fetching latest snapshot: %v\n", err)
+		} else {
+			fmt.Println("No snapshot found, starting from scratch.")
+		}
+		return &SnapshotState{0, nil}
+	}
+
+	snapshotFile, err := os.Open(location)
+	if err != nil {
+		fmt.Printf("Error reading snapshot file: %v\n", err)
+		return &SnapshotState{0, nil}
+	}
+
+	var projection Projection
+	dec := gob.NewDecoder(snapshotFile)
+	err = dec.Decode(&projection)
+	if err != nil {
+		fmt.Printf("Error loading snapshot into projection: %v\n", err)
+		return &SnapshotState{0, nil}
+	}
+
+	return &SnapshotState{position, &projection}
 }
 
 func (s *Snapshots) prepareGetLatestSnapshotPosition() *sql.Stmt {
@@ -54,7 +92,7 @@ func (s *Snapshots) takeNewSnapshotIfNeeded(projection *Projection, position int
 
 func (s *Snapshots) createNewSnapshot(projection *Projection, position int) {
 	_, err := s.db.Exec(
-		"INSERT INTO `snapshot` (position, status) VALUES (?, 'CREATING_SNAPSHOT')", position,
+		"INSERT INTO `snapshot` (position, status) VALUES (?, ?)", position, SnapshotStatusCreating,
 	)
 
 	if err != nil {
@@ -69,7 +107,7 @@ func (s *Snapshots) createNewSnapshot(projection *Projection, position int) {
 	}
 
 	_, err = s.db.Exec(
-		"UPDATE `snapshot` SET `status` = 'SNAPSHOT_COMPLETE', `location` = ? WHERE `position` = ?", snapshotFilePath, position,
+		"UPDATE `snapshot` SET `status` = ?, `location` = ? WHERE `position` = ?", SnapshotStatusComplete, snapshotFilePath, position,
 	)
 	if err != nil {
 		fmt.Printf("Error setting snapshot success status in db: %v\n", err)
