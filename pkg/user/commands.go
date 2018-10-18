@@ -44,3 +44,17 @@ func NewDepositCommand(streamID string, eventNumber int, amount float32) Deposit
 	c.Amount = amount
 	return c
 }
+
+// A WithdrawCommand is used to create a new intel
+type WithdrawCommand struct {
+	BaseCommand
+	Amount float32
+}
+
+// NewWithdrawCommand creates a new create intel command
+func NewWithdrawCommand(streamID string, eventNumber int, amount float32) WithdrawCommand {
+	c := WithdrawCommand{}
+	c.BaseCommand = BaseCommand{streamID, eventNumber}
+	c.Amount = amount
+	return c
+}

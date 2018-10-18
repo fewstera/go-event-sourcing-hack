@@ -28,6 +28,9 @@ func writeErrorResponse(err error, w http.ResponseWriter) {
 	case *user.UserNotFoundError:
 		w.WriteHeader(http.StatusNotFound)
 		fmt.Fprintf(w, "UserNotFoundError: %v\n", err)
+	case *user.InsufficientFundsError:
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Insufficient funds: %v\n", err)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintf(w, "Error: %v\n", err)

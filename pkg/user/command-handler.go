@@ -25,6 +25,8 @@ func (ch *CommandHandler) Handle(c Command) (eventstore.Event, error) {
 		return ch.handleCreateUser(c)
 	case DepositCommand:
 		return ch.handleDeposit(c)
+	case WithdrawCommand:
+		return ch.handleWithdraw(c)
 	default:
 		return nil, &UnkownCommandError{fmt.Sprintf("Unkown command (%s) sent to command handler", reflect.TypeOf(c))}
 	}
@@ -52,6 +54,26 @@ func (ch *CommandHandler) handleDeposit(c DepositCommand) (eventstore.Event, err
 	}
 
 	event, err := usr.Deposit(c.ClientEventNumber, c.Amount)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ch.eventstore.SaveEvent(event)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Saved user event")
+	return event, nil
+}
+
+func (ch *CommandHandler) handleWithdraw(c WithdrawCommand) (eventstore.Event, error) {
+	usr, err := ch.projection.GetUser(c.StreamID)
+	if err != nil {
+		return nil, err
+	}
+
+	event, err := usr.Withdraw(c.ClientEventNumber, c.Amount)
 	if err != nil {
 		return nil, err
 	}

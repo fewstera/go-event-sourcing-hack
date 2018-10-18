@@ -36,6 +36,11 @@ func (s *Server) router() *mux.Router {
 			"/users/{id}/deposit",
 			s.depositHandler,
 		},
+		Route{
+			"POST",
+			"/users/{id}/withdraw",
+			s.withdrawHandler,
+		},
 	}
 
 	router := mux.NewRouter().StrictSlash(true)

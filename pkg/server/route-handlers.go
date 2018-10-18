@@ -86,3 +86,27 @@ func (s *Server) depositHandler(w http.ResponseWriter, r *http.Request) {
 
 	writeEventJsonResponse(event, w)
 }
+
+func (s *Server) withdrawHandler(w http.ResponseWriter, r *http.Request) {
+	streamID := mux.Vars(r)["id"]
+	payload := struct {
+		Version int     `json:"version"`
+		Amount  float32 `json:"amount"`
+	}{}
+
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&payload)
+	if err != nil {
+		writeErrorResponse(err, w)
+		return
+	}
+
+	cmd := user.NewWithdrawCommand(streamID, payload.Version, payload.Amount)
+	event, err := s.cmdHandler.Handle(cmd)
+	if err != nil {
+		writeErrorResponse(err, w)
+		return
+	}
+
+	writeEventJsonResponse(event, w)
+}
