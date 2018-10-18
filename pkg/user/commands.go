@@ -30,3 +30,17 @@ func NewCreateUserCommand(streamID string, name string, age int) CreateUserComma
 	c.Age = age
 	return c
 }
+
+// A DepositCommand is used to create a new intel
+type DepositCommand struct {
+	BaseCommand
+	Amount float32
+}
+
+// NewDepositCommand creates a new create intel command
+func NewDepositCommand(streamID string, eventNumber int, amount float32) DepositCommand {
+	c := DepositCommand{}
+	c.BaseCommand = BaseCommand{streamID, eventNumber}
+	c.Amount = amount
+	return c
+}

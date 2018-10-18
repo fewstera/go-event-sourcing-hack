@@ -43,3 +43,12 @@ func (p *Projection) GetUser(userID string) (*User, error) {
 	return user, nil
 
 }
+
+func (p *Projection) GetAllUsers() []*User {
+	var users []*User
+	for _, user := range p.Users {
+		users = append(users, user)
+	}
+
+	return users
+}

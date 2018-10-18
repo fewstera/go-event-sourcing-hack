@@ -7,6 +7,7 @@ import (
 // Event types
 const (
 	EventTypeUserCreated string = "USER_CREATED"
+	EventTypeDeposited   string = "DEPOSITED"
 )
 
 // EmptyEventCreators returns a mapping of EventTypes to funcs that return
@@ -17,5 +18,6 @@ const (
 func EmptyEventCreators() eventstore.EmptyEventCreatorsMap {
 	return eventstore.EmptyEventCreatorsMap{
 		EventTypeUserCreated: func() eventstore.Event { return &UserCreatedEvent{} },
+		EventTypeDeposited:   func() eventstore.Event { return &DepositedEvent{} },
 	}
 }

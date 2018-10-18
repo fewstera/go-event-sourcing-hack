@@ -1,5 +1,7 @@
 package user
 
+import "fmt"
+
 type InvalidAgeError struct {
 	message string
 }
@@ -22,4 +24,14 @@ type UserNotFoundError struct {
 
 func (e *UserNotFoundError) Error() string {
 	return e.message
+}
+
+// EventNumberSyncError is an error for when
+type EventNumberSyncError struct {
+	Expected int
+	Got      int
+}
+
+func (e *EventNumberSyncError) Error() string {
+	return fmt.Sprintf("event number sync error: expected %d, got %d", e.Expected, e.Got)
 }

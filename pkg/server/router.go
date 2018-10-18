@@ -19,12 +19,22 @@ func (s *Server) router() *mux.Router {
 		Route{
 			"GET",
 			"/users/{id}",
-			s.GetUserRouteHandler,
+			s.getUserHandler,
+		},
+		Route{
+			"GET",
+			"/users",
+			s.getAllUsersHandler,
 		},
 		Route{
 			"POST",
 			"/users",
-			s.PostUserRouteHandler,
+			s.createUserHandler,
+		},
+		Route{
+			"POST",
+			"/users/{id}/deposit",
+			s.depositHandler,
 		},
 	}
 

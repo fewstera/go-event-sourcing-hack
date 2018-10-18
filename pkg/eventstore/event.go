@@ -31,15 +31,15 @@ type EventData struct {
 	EventNumber int       `json:"eventNumber"`
 	EventType   string    `json:"eventType"`
 	Data        string    `json:"data"`
-	Timestamp   time.Time `json:"timestamp"`
+	Timestamp   time.Time `json:"-"`
 }
 
 // BaseEvent can be embedded by implementers of the Event interface to gain
 // implementations for EventNumber() and StreamID().
 type BaseEvent struct {
-	StreamID    string
-	EventNumber int
-	Timestamp   time.Time
+	StreamID    string    `json:"streamID"`
+	EventNumber int       `json:"eventNumber"`
+	Timestamp   time.Time `json:"timestamp"`
 }
 
 // GetEventNumber returns the event number of the event.

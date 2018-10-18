@@ -2,25 +2,28 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/fewstera/go-event-sourcing-hack/pkg/eventstore"
 	"github.com/fewstera/go-event-sourcing-hack/pkg/user"
 	"github.com/gorilla/mux"
 	"github.com/satori/go.uuid"
 )
 
-type CreateUserPayload struct {
-	Name string `json:"name"`
-	Age  int    `json:"age"`
+func (s *Server) getAllUsersHandler(w http.ResponseWriter, r *http.Request) {
+	users := s.projection.GetAllUsers()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(users); err != nil {
+		writeErrorResponse(err, w)
+	}
 }
 
-func (s *Server) GetUserRouteHandler(w http.ResponseWriter, r *http.Request) {
-	userId := mux.Vars(r)["id"]
-	usr, err := s.projection.GetUser(userId)
+func (s *Server) getUserHandler(w http.ResponseWriter, r *http.Request) {
+	streamID := mux.Vars(r)["id"]
+	usr, err := s.projection.GetUser(streamID)
 	if err != nil {
 		writeErrorResponse(err, w)
 		return
@@ -33,8 +36,12 @@ func (s *Server) GetUserRouteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) PostUserRouteHandler(w http.ResponseWriter, r *http.Request) {
-	var payload CreateUserPayload
+func (s *Server) createUserHandler(w http.ResponseWriter, r *http.Request) {
+	payload := struct {
+		Name string `json:"name"`
+		Age  int    `json:"age"`
+	}{}
+
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
 		writeErrorResponse(err, w)
@@ -56,21 +63,26 @@ func (s *Server) PostUserRouteHandler(w http.ResponseWriter, r *http.Request) {
 	writeEventJsonResponse(event, w)
 }
 
-func writeEventJsonResponse(event eventstore.Event, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(event); err != nil {
-		writeErrorResponse(err, w)
-	}
-}
+func (s *Server) depositHandler(w http.ResponseWriter, r *http.Request) {
+	streamID := mux.Vars(r)["id"]
+	payload := struct {
+		Version int     `json:"version"`
+		Amount  float32 `json:"amount"`
+	}{}
 
-func writeErrorResponse(err error, w http.ResponseWriter) {
-	switch err.(type) {
-	case *user.UserNotFoundError:
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "UserNotFoundError: %v\n", err)
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "Error: %v", err)
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&payload)
+	if err != nil {
+		writeErrorResponse(err, w)
+		return
 	}
+
+	cmd := user.NewDepositCommand(streamID, payload.Version, payload.Amount)
+	event, err := s.cmdHandler.Handle(cmd)
+	if err != nil {
+		writeErrorResponse(err, w)
+		return
+	}
+
+	writeEventJsonResponse(event, w)
 }
