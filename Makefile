@@ -38,7 +38,7 @@ start: install-deps build provision-database
 
 .PHONY: clean
 clean:
-	rm -f ./eventsourcing-hack ./coverage/
+	rm -rf ./eventsourcing-hack ./coverage/
 
 # docker-rebuild will only need to be called when you have made changes
 # to the Dockerfile or add new go dependencies. Not calling this
