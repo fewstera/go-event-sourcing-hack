@@ -19,7 +19,7 @@ func main() {
 	db := initDb("root:password@tcp(db:3306)/events")
 	projection := user.NewProjection()
 	ef := eventstore.NewEventFactory(log, user.EmptyEventCreators())
-	es := eventstore.NewDBEventStore(db, ef, log, []eventstore.Projection{projection})
+	es := eventstore.NewDBEventStore(db, ef, log, []chan<- eventstore.Event{projection.EventChan()})
 	ch := user.NewCommandHandler(es, projection)
 
 	s := server.NewServer(log, projection, ch)

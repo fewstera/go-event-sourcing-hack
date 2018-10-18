@@ -10,14 +10,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// A Projection is for deriving current state from the stream of events.
-// As the event store receives events the Apply method will be called with each
-// individual event in a sequential order.
-type Projection interface {
-	// Apply will be called when an event is received
-	Apply(evt Event)
-}
-
 // DBEventStore is an event store that is driven by a SQL database and applies events to a list
 // of projections.
 //
@@ -28,7 +20,7 @@ type Projection interface {
 // the event store will apply the events to all projections it knows about.
 type DBEventStore struct {
 	db              *sql.DB
-	projections     []Projection
+	eventChans      []chan<- Event
 	eventFactory    *EventFactory
 	log             *logrus.Logger
 	stopPollingChan chan struct{}
@@ -39,7 +31,7 @@ type DBEventStore struct {
 
 // EventStore interface to define event store actions
 type EventStore interface {
-	SaveEvent(evt Event) error
+	SaveEvent(event Event) error
 }
 
 const (
@@ -50,10 +42,19 @@ const (
 // NewDBEventStore instantiates a new DBEventStore using the provided db and list of projections.
 //
 // After the instance has been initialised, the event polling process is started inside a new go routing.
-func NewDBEventStore(db *sql.DB, eventFactory *EventFactory, log *logrus.Logger, projections []Projection) *DBEventStore {
+func NewDBEventStore(db *sql.DB, eventFactory *EventFactory, log *logrus.Logger, eventChans []chan<- Event) *DBEventStore {
 	e := new(DBEventStore)
+
+	for i, eventChan := range eventChans {
+		if cap(eventChan) == 0 {
+			log.Warnf("Eventstore event chan %v is unbuffered, consider using a buffered chan with length of %v.", i, numberOfEventsToFetchPerQuery)
+		} else if cap(eventChan) < numberOfEventsToFetchPerQuery {
+			log.Warnf("Buffered event chan %v has a capacity less than the number of events fetched per query (%v), consider increasing to prevent blocking queries.", i, numberOfEventsToFetchPerQuery)
+		}
+	}
+
 	e.db = db
-	e.projections = projections
+	e.eventChans = eventChans
 	e.eventFactory = eventFactory
 	e.log = log
 
@@ -88,8 +89,8 @@ func (e *DBEventStore) StopPolling() error {
 
 // SaveEvent saves the provided event to the database. If there is a issue persisting the event
 // then an error is returned, otherwise nil is returned.
-func (e *DBEventStore) SaveEvent(evt Event) error {
-	eventData, err := evt.Data()
+func (e *DBEventStore) SaveEvent(event Event) error {
+	eventData, err := event.Data()
 	if err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func (e *DBEventStore) SaveEvent(evt Event) error {
 		switch e := err.(type) {
 		case *mysql.MySQLError:
 			if e.Number == 1062 {
-				err = &EventNumberConflictError{evt.GetStreamID(), evt.GetEventNumber()}
+				err = &EventNumberConflictError{event.GetStreamID(), event.GetEventNumber()}
 			}
 		}
 		e.log.Warnf("Error saving event: %v", err.Error())
@@ -123,7 +124,7 @@ func (e *DBEventStore) prepareFetchMoreStatement() *sql.Stmt {
 	return stmt
 }
 
-// fetchMoreRecentEvents is used to new events and apply them to the projections. This method is ran in an
+// fetchMoreRecentEvents is used to new events and to the provided event channels. This method is ran in an
 // infinite loop, so should be called in a go routine.
 func (e *DBEventStore) fetchMoreRecentEvents() {
 	rows, err := e.fetchMoreStmt.Query(e.currentPosition)
@@ -147,11 +148,11 @@ func (e *DBEventStore) fetchMoreRecentEvents() {
 			return
 		}
 
-		evt := e.eventFactory.CreateEvent(&EventData{streamID, eventNumber, eventType, data, timestamp})
-		if evt != nil {
-			// Apply the event to each projection
-			for _, projection := range e.projections {
-				projection.Apply(evt)
+		event := e.eventFactory.CreateEvent(&EventData{streamID, eventNumber, eventType, data, timestamp})
+		if event != nil {
+			// Send the event to each event channel
+			for _, eventChan := range e.eventChans {
+				eventChan <- event
 			}
 		}
 

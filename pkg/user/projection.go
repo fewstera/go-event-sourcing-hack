@@ -7,13 +7,31 @@ import (
 )
 
 type Projection struct {
-	Users map[string]*User
+	Users     map[string]*User
+	eventChan chan eventstore.Event
 }
 
 func NewProjection() *Projection {
-	projection := new(Projection)
-	projection.Users = make(map[string]*User)
-	return projection
+	p := new(Projection)
+	p.Users = make(map[string]*User)
+	p.eventChan = make(chan eventstore.Event, 100)
+
+	go p.receiveEvent()
+
+	return p
+}
+
+func (p *Projection) EventChan() chan<- eventstore.Event {
+	return p.eventChan
+}
+
+func (p *Projection) receiveEvent() {
+	// Wait for next event, this line will block until an event is sent
+	event := <-p.eventChan
+	p.Apply(event)
+
+	// Get next event
+	go p.receiveEvent()
 }
 
 func (p *Projection) Apply(event eventstore.Event) {
